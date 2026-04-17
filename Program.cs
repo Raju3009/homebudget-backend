@@ -59,7 +59,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// ✅ Test route (to confirm app works)
-app.MapGet("/", () => "API is running 🚀");
+// 👇 ADD THIS LINE HERE
+app.MapGet("/", () => "HomeBudget API is running 🚀");
 
 app.Run();
