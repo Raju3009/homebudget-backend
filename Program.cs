@@ -70,20 +70,21 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// 🔥 ENABLE SWAGGER IN PRODUCTION (IMPORTANT)
+// 🔥 Swagger (ALWAYS ENABLE)
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// 🌐 Enable CORS
+// 🌐 CORS
 app.UseCors("AllowAll");
 
-// 🔐 Auth middleware
+// 🔐 Auth
 app.UseAuthentication();
 app.UseAuthorization();
 
+// 🔥 THIS IS CORRECT (NO UseEndpoints)
 app.MapControllers();
 
-// 🔥 IMPORTANT FOR RENDER PORT
+// 🔥 Render PORT FIX
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
 app.Urls.Add($"http://0.0.0.0:{port}");
 
