@@ -70,12 +70,9 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// 🔥 Swagger middleware
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+// 🔥 ENABLE SWAGGER IN PRODUCTION (IMPORTANT)
+app.UseSwagger();
+app.UseSwaggerUI();
 
 // 🌐 Enable CORS
 app.UseCors("AllowAll");
@@ -85,5 +82,9 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// 🔥 IMPORTANT FOR RENDER PORT
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+app.Urls.Add($"http://0.0.0.0:{port}");
 
 app.Run();
