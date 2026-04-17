@@ -7,40 +7,18 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// 🔥 IMPORTANT: Force Kestrel to use Render PORT
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+
 // Services
 builder.Services.AddControllers();
 
-// 🔥 Swagger with JWT support
+// Swagger
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Name = "Authorization",
-        Type = SecuritySchemeType.Http,
-        Scheme = "bearer",
-        BearerFormat = "JWT",
-        In = ParameterLocation.Header,
-        Description = "Enter: Bearer YOUR_TOKEN"
-    });
+builder.Services.AddSwaggerGen();
 
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            new string[] {}
-        }
-    });
-});
-
-// 🔐 JWT Authentication
+// JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -59,7 +37,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// 🌐 CORS
+// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
@@ -70,22 +48,18 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// 🔥 Swagger (ALWAYS ENABLE)
+// 🔥 Middleware order (VERY IMPORTANT)
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// 🌐 CORS
 app.UseCors("AllowAll");
 
-// 🔐 Auth
 app.UseAuthentication();
 app.UseAuthorization();
 
-// 🔥 THIS IS CORRECT (NO UseEndpoints)
 app.MapControllers();
 
-// 🔥 Render PORT FIX
-var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
-app.Urls.Add($"http://0.0.0.0:{port}");
+// ✅ Test route (to confirm app works)
+app.MapGet("/", () => "API is running 🚀");
 
 app.Run();
