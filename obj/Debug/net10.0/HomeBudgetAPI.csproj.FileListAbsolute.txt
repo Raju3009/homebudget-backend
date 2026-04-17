@@ -1,0 +1,8 @@
+D:\HomeBudgetAI\backend\HomeBudgetAPI\obj\Debug\net10.0\HomeBudgetAPI.csproj.AssemblyReference.cache
+D:\HomeBudgetAI\backend\HomeBudgetAPI\obj\Debug\net10.0\rpswa.dswa.cache.json
+D:\HomeBudgetAI\backend\HomeBudgetAPI\obj\Debug\net10.0\HomeBudgetAPI.GeneratedMSBuildEditorConfig.editorconfig
+D:\HomeBudgetAI\backend\HomeBudgetAPI\obj\Debug\net10.0\HomeBudgetAPI.AssemblyInfoInputs.cache
+D:\HomeBudgetAI\backend\HomeBudgetAPI\obj\Debug\net10.0\HomeBudgetAPI.AssemblyInfo.cs
+D:\HomeBudgetAI\backend\HomeBudgetAPI\obj\Debug\net10.0\HomeBudgetAPI.csproj.CoreCompileInputs.cache
+D:\HomeBudgetAI\backend\HomeBudgetAPI\obj\Debug\net10.0\HomeBudgetAPI.MvcApplicationPartsAssemblyInfo.cs
+D:\HomeBudgetAI\backend\HomeBudgetAPI\obj\Debug\net10.0\HomeBudgetAPI.MvcApplicationPartsAssemblyInfo.cache
