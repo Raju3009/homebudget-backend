@@ -1,12 +1,18 @@
-public class Expense
+namespace HomeBudgetAPI.Models
 {
-    public int Id { get; set; }
+    public class Expense
+    {
+        public int Id { get; set; }
 
-    public string Title { get; set; } = string.Empty;
+        public string Title { get; set; } = "";
 
-    public decimal Amount { get; set; }
+        public int Amount { get; set; }
 
-    public int UserId { get; set; }  // 🔐 User-based data
+        public string Category { get; set; } = "";
 
-    public DateTime Date { get; set; } = DateTime.Now; // 📅 Date tracking
+        public DateTime Date { get; set; } = DateTime.Now;
+
+        // 🔐 ADD THIS (IMPORTANT)
+        public string UserEmail { get; set; } = "";
+    }
 }

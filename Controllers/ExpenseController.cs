@@ -1,16 +1,15 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using HomeBudgetAPI.Data;
 using HomeBudgetAPI.Models;
-using Microsoft.AspNetCore.Authorization;
-using System;
-using System.Linq;
-using System.Security.Claims;
 
 namespace HomeBudgetAPI.Controllers
 {
+    [Authorize] // 🔐 protect all endpoints
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
     public class ExpenseController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -20,142 +19,102 @@ namespace HomeBudgetAPI.Controllers
             _context = context;
         }
 
-        // 🔑 SAFE USER ID METHOD (FIXED WARNING)
-        private int GetUserId()
+        // 🔐 Get logged-in user email from token
+        private string GetUserEmail()
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-
-            if (userIdClaim == null)
-                throw new UnauthorizedAccessException("Invalid token");
-
-            return int.Parse(userIdClaim.Value);
+            return User.FindFirst(ClaimTypes.Email)?.Value ?? "";
         }
 
-        // ➕ ADD EXPENSE
-        [HttpPost]
-        public IActionResult AddExpense(Expense expense)
+        // ✅ GET ALL (user-specific)
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
         {
-            var userId = GetUserId();
+            var email = GetUserEmail();
 
-            expense.UserId = userId;
-            expense.Date = expense.Date == default ? DateTime.Now : expense.Date;
+            var data = await _context.Expenses
+                .Where(e => e.UserEmail == email)
+                .OrderByDescending(e => e.Date)
+                .ToListAsync();
+
+            return Ok(data);
+        }
+
+        // ✅ ADD
+        [HttpPost]
+        public async Task<IActionResult> Add([FromBody] Expense expense)
+        {
+            if (string.IsNullOrEmpty(expense.Title) || expense.Amount == 0)
+                return BadRequest(new { message = "Invalid data" });
+
+            // 🔐 attach user
+            expense.UserEmail = GetUserEmail();
+            expense.Date = DateTime.Now;
 
             _context.Expenses.Add(expense);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Expense added ✅" });
-        }
-
-        // 📊 GET ALL (USER-SPECIFIC)
-        [HttpGet]
-        public IActionResult GetExpenses()
-        {
-            var userId = GetUserId();
-
-            var data = _context.Expenses
-                .Where(e => e.UserId == userId)
-                .ToList();
-
-            return Ok(data);
-        }
-
-        // 💰 TOTAL
-        [HttpGet("total")]
-        public IActionResult GetTotalExpense()
-        {
-            var userId = GetUserId();
-
-            var total = _context.Expenses
-                .Where(e => e.UserId == userId)
-                .Sum(e => e.Amount);
-
-            return Ok(new { total });
-        }
-
-        // 📅 MONTHLY SUMMARY
-        [HttpGet("monthly")]
-        public IActionResult GetMonthlySummary()
-        {
-            var userId = GetUserId();
-
-            var data = _context.Expenses
-                .Where(e => e.UserId == userId)
-                .GroupBy(e => new { e.Date.Year, e.Date.Month })
-                .Select(g => new
-                {
-                    year = g.Key.Year,
-                    month = g.Key.Month,
-                    total = g.Sum(x => x.Amount)
-                })
-                .ToList();
-
-            return Ok(data);
-        }
-
-        // 🤖 INSIGHTS
-        [HttpGet("insights")]
-        public IActionResult GetInsights()
-        {
-            var userId = GetUserId();
-
-            var total = _context.Expenses
-                .Where(e => e.UserId == userId)
-                .Sum(e => e.Amount);
-
-            if (total == 0)
-                return Ok(new[] { "No data available" });
-
-            var insights = new System.Collections.Generic.List<string>();
-
-            if (total > 5000)
-                insights.Add("⚠️ Your spending is high this month");
-
-            if (total < 2000)
-                insights.Add("✅ Your spending is under control");
-
-            if (!insights.Any())
-                insights.Add("📊 Keep tracking your expenses");
-
-            return Ok(insights);
+            return Ok(expense);
         }
 
         // ✏️ UPDATE
         [HttpPut("{id}")]
-        public IActionResult UpdateExpense(int id, Expense updatedExpense)
+        public async Task<IActionResult> Update(int id, [FromBody] Expense updated)
         {
-            var userId = GetUserId();
+            var email = GetUserEmail();
 
-            var expense = _context.Expenses
-                .FirstOrDefault(e => e.Id == id && e.UserId == userId);
+            var exp = await _context.Expenses
+                .FirstOrDefaultAsync(e => e.Id == id && e.UserEmail == email);
 
-            if (expense == null)
-                return NotFound(new { message = "Expense not found ❌" });
+            if (exp == null) return NotFound();
 
-            expense.Title = updatedExpense.Title;
-            expense.Amount = updatedExpense.Amount;
-            expense.Date = updatedExpense.Date;
+            exp.Title = updated.Title;
+            exp.Amount = updated.Amount;
+            exp.Category = updated.Category;
 
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Expense updated ✅" });
+            return Ok(exp);
         }
 
-        // 🗑️ DELETE
+        // ❌ DELETE (you were missing this)
         [HttpDelete("{id}")]
-        public IActionResult DeleteExpense(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            var userId = GetUserId();
+            var email = GetUserEmail();
 
-            var expense = _context.Expenses
-                .FirstOrDefault(e => e.Id == id && e.UserId == userId);
+            var exp = await _context.Expenses
+                .FirstOrDefaultAsync(e => e.Id == id && e.UserEmail == email);
 
-            if (expense == null)
-                return NotFound(new { message = "Expense not found ❌" });
+            if (exp == null) return NotFound();
 
-            _context.Expenses.Remove(expense);
-            _context.SaveChanges();
+            _context.Expenses.Remove(exp);
+            await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Expense deleted ✅" });
+            return Ok(new { message = "Deleted successfully" });
+        }
+
+        // 📊 SUMMARY (user-specific)
+        [HttpGet("summary")]
+        public async Task<IActionResult> Summary()
+        {
+            var email = GetUserEmail();
+
+            var data = await _context.Expenses
+                .Where(e => e.UserEmail == email)
+                .GroupBy(e => new
+                {
+                    e.Category,
+                    Type = e.Amount > 0 ? "Income" : "Expense"
+                })
+                .Select(g => new
+                {
+                    category = g.Key.Category,
+                    type = g.Key.Type,
+                    total = g.Sum(x => x.Amount)
+                })
+                .ToListAsync();
+
+            return Ok(data);
         }
     }
 }
