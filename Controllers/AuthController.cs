@@ -64,6 +64,18 @@ namespace HomeBudgetAPI.Controllers
             return Ok(new { token, email = user.Email });
         }
 
+        [HttpPost("forgot")]
+        public IActionResult Forgot([FromBody] LoginModel model)
+        {
+            if (string.IsNullOrWhiteSpace(model.Email))
+                return BadRequest(new { message = "Email is required" });
+
+            return Ok(new
+            {
+                message = "If this email exists, password reset instructions will be sent."
+            });
+        }
+
         private string GenerateToken(string email)
         {
             var key = new SymmetricSecurityKey(
